@@ -108,6 +108,7 @@ async function fetchLatestEvent(team) {
   
   async function clicked() {
     // Create arrays to store the OPR promises
+    document.getElementsByTagName('h1')[0].innerHTML = "calculating..."
     const redTeamPromises = [];
     const blueTeamPromises = [];
   
@@ -144,6 +145,7 @@ async function fetchLatestEvent(team) {
         return total + (typeof opr === 'number' ? opr : 0);
       }, 0);
       document.getElementsByTagName('h1')[0].innerHTML = Math.round(redScore) + " - " + Math.round(blueScore)
+      document.getElementsByTagName('h1')[0].style.color = redScore > blueScore ? 'rgb(255, 135, 135)' : 'rgb(135, 181, 255)'
 
       // Output the scores
     } catch (error) {
