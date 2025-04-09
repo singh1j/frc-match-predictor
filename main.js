@@ -25,6 +25,33 @@ async function fetchLatestEvent(team) {
       console.error('Error fetching events:', error);
     }
   }
+  async function fetchLatestEvent(team) {
+    try {
+      const response = await fetch('https://www.thebluealliance.com/api/v3/team/' + team + '/events', {
+        headers: {
+          'X-TBA-Auth-Key': 'kGqIqjkNicZ2tUgS63Vn6FPJiCTOggYvrLMGMYaXR9hNkAALBf5GgTVwiL9pfm7L'
+        }
+      });
+  
+      const events = await response.json();
+  
+      // Sort events by start_date, descending (most recent first)
+      const sortedEvents = events.sort((a, b) => new Date(b.start_date) - new Date(a.start_date));
+  
+      // Get the latest event (first in the sorted array)
+      const latestEvent = sortedEvents[1];  // Fixed to [0] to get the most recent event
+  
+      if (latestEvent) {
+        // Construct the full event key (e.g., 2025_mrcmp)
+        const eventKey = latestEvent.year + latestEvent.event_code;  // Corrected the format
+        return eventKey;  // Return the full event key
+      } else {
+        return null;
+      }
+    } catch (error) {
+      console.error('Error fetching events:', error);
+    }
+  }
   
   async function fetchOPRForEvent(team) {
     try {
@@ -55,7 +82,26 @@ async function fetchLatestEvent(team) {
       console.error('Error fetching OPR:', error);
     }
   }
+  async function fetchTeamName(team) {
+    try {
+      // Get the latest event key
   
+      // Now fetch the OPR for the event using the full event key
+      const response = await fetch(`https://www.thebluealliance.com/api/v3/team/`+team, {
+        headers: {
+          'X-TBA-Auth-Key': 'kGqIqjkNicZ2tUgS63Vn6FPJiCTOggYvrLMGMYaXR9hNkAALBf5GgTVwiL9pfm7L'
+        }
+      });
+  
+      const data = await response.json();
+  
+      // Extract the OPR for the specific team (e.g., frc1391)
+      return data.nickname;
+  }
+  catch {
+    console.log("N Bin")
+  }
+}
   var inputs = document.getElementsByTagName('input');
   var redScore = 0;
   var blueScore = 0;
@@ -72,6 +118,7 @@ async function fetchLatestEvent(team) {
         return;  // Exit if any input is empty
       } else {
         // Prepare the promises for each team's OPR
+        document.getElementById((i+1)).innerHTML = await fetchTeamName('frc'+inputs[i].value)
         if (i < 3) {
           redTeamPromises.push(fetchOPRForEvent('frc' + inputs[i].value));
         } else {
