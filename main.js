@@ -1,30 +1,3 @@
-async function fetchLatestEvent(team) {
-    try {
-      const response = await fetch('https://www.thebluealliance.com/api/v3/team/' + team + '/events', {
-        headers: {
-          'X-TBA-Auth-Key': 'kGqIqjkNicZ2tUgS63Vn6FPJiCTOggYvrLMGMYaXR9hNkAALBf5GgTVwiL9pfm7L'
-        }
-      });
-  
-      const events = await response.json();
-  
-      // Sort events by start_date, descending (most recent first)
-      const sortedEvents = events.sort((a, b) => new Date(b.start_date) - new Date(a.start_date));
-  
-      // Get the latest event (first in the sorted array)
-      const latestEvent = sortedEvents[1];  // Fixed to [0] to get the most recent event
-  
-      if (latestEvent) {
-        // Construct the full event key (e.g., 2025_mrcmp)
-        const eventKey = latestEvent.year + latestEvent.event_code;  // Corrected the format
-        return eventKey;  // Return the full event key
-      } else {
-        return null;
-      }
-    } catch (error) {
-      console.error('Error fetching events:', error);
-    }
-  }
   async function fetchLatestEvent(team) {
     try {
       const response = await fetch('https://www.thebluealliance.com/api/v3/team/' + team + '/events', {
@@ -37,13 +10,17 @@ async function fetchLatestEvent(team) {
   
       // Sort events by start_date, descending (most recent first)
       const sortedEvents = events.sort((a, b) => new Date(b.start_date) - new Date(a.start_date));
-  
       // Get the latest event (first in the sorted array)
-      const latestEvent = sortedEvents[1];  // Fixed to [0] to get the most recent event
+      var latestEvent = sortedEvents[0];  // Fixed to [0] to get the most recent event
   
       if (latestEvent) {
         // Construct the full event key (e.g., 2025_mrcmp)
-        const eventKey = latestEvent.year + latestEvent.event_code;  // Corrected the format
+        var eventKey = latestEvent.year + latestEvent.event_code;
+        if (eventKey == "2025cmptx") {
+          latestEvent = sortedEvents[1]
+          eventKey = latestEvent.year + latestEvent.event_code;
+        }  // Corrected the format
+        console.log(eventKey)
         return eventKey;  // Return the full event key
       } else {
         return null;
@@ -61,16 +38,13 @@ async function fetchLatestEvent(team) {
         console.error('Invalid event key, cannot fetch OPR.');
         return;
       }
-  
       // Now fetch the OPR for the event using the full event key
       const oprResponse = await fetch(`https://www.thebluealliance.com/api/v3/event/${eventKey}/oprs`, {
         headers: {
           'X-TBA-Auth-Key': 'kGqIqjkNicZ2tUgS63Vn6FPJiCTOggYvrLMGMYaXR9hNkAALBf5GgTVwiL9pfm7L'
         }
       });
-  
       const oprData = await oprResponse.json();
-  
       // Extract the OPR for the specific team (e.g., frc1391)
       const teamOPR = oprData.oprs[team];
       if (teamOPR) {
@@ -99,7 +73,7 @@ async function fetchLatestEvent(team) {
       return data.nickname;
   }
   catch {
-    console.log("N Bin")
+    console.log("Couldn't fetch team name")
   }
 }
   var inputs = document.getElementsByTagName('input');
@@ -134,6 +108,7 @@ async function fetchLatestEvent(team) {
       const blueOPRs = await Promise.all(blueTeamPromises);
       console.log(redOPRs)
       console.log(blueOPRs)
+
       // Now sum the OPRs for red and blue teams
       redScore = redOPRs.reduce((total, opr) => {
         // Ensure the opr is a valid number, otherwise treat it as 0
@@ -146,7 +121,10 @@ async function fetchLatestEvent(team) {
       }, 0);
       document.getElementsByTagName('h1')[0].innerHTML = Math.round(redScore) + " - " + Math.round(blueScore)
       document.getElementsByTagName('h1')[0].style.color = redScore > blueScore ? 'rgb(255, 135, 135)' : 'rgb(135, 181, 255)'
-
+      for (i=1;i<7;i++){
+        var thisOpr = i<4 ? Math.round(((redOPRs[i-1]/redScore)*100))+"%" : Math.round(((blueOPRs[i-4]/blueScore)*100))+"%"
+        document.getElementById(i).innerHTML = document.getElementById(i).innerHTML + "   " + thisOpr;
+      }
       // Output the scores
     } catch (error) {
       console.error("Error fetching OPRs:", error);
